@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
 
                 JSONArray a = new JSONArray(o);
                 MountainReaderDbHelper mountainReaderDBHelper = new MountainReaderDbHelper(getApplicationContext());
-                SQLiteDatabase db = mountainReaderDBHelper.getWritableDatabase();
+                final SQLiteDatabase db = mountainReaderDBHelper.getWritableDatabase();
                 db.delete(MountainReaderContract.MountainEntry.TABLE_NAME,null,null);
 
                 for(int i = 0; i < a.length(); i++){
@@ -239,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
                 adapter = new ArrayAdapter(getApplicationContext(),R.layout.list_item_textview,R.id.list_item_textview,itemIds);
 
 
@@ -250,9 +251,45 @@ public class MainActivity extends AppCompatActivity {
                 myListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                        String[] projection = {
+                                //BaseColumns._ID,
+                                //MountainReaderContract.MountainEntry.COLUMN_NAME_NAME
+                                MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
+                                MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH,
+                                /*MountainReaderContract.MountainEntry.COLUMN_NAME_BILD,
+                                MountainReaderContract.MountainEntry.COLUMN_NAME_URL*/
+
+                        };
+
+                        String sortOrder;
+
+                        if (vilken == true) {
+                            sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " DESC";
+                        }else{
+                            sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH+ " DESC";
+                        }
+
+
+
+                        final Cursor cursor = db.query(
+                                MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
+                                projection,             // The array of columns to return (pass null to get all)
+                                null,              // The columns for the WHERE clause
+                                null,          // The values for the WHERE clause
+                                null,                   // don't group the rows
+                                null,                   // don't filter by row groups
+                                sortOrder               // The sort order
+                        );
+
                         cursor.moveToPosition(position);
-                        String tmp = cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
-                        Toast.makeText(getApplicationContext(), tmp, Toast.LENGTH_LONG).show();
+                        String tmp = "Location: ";
+                        tmp += cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
+                        tmp +="\nHeight: ";
+                        tmp += cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH));
+                        tmp +=" meters";
+                        Toast.makeText(getApplicationContext(), tmp, Toast.LENGTH_SHORT).show();
+                        cursor.close();
                     }
                 });
 
