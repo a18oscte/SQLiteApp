@@ -13,4 +13,9 @@
         android:orderInCategory="10"
         android:title="Sort by descending Mountain height"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/action_refresh"
+        android:orderInCategory="10"
+        android:title="Refresh"
+        app:showAsAction="never"/>
 </menu>

@@ -34,13 +34,78 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayAdapter adapter;
     boolean vilken;
+    String sortOrder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        visa();
+    }
+
+    public void visa(){
+        MountainReaderDbHelper mountainReaderDBHelper = new MountainReaderDbHelper(getApplicationContext());
+        final SQLiteDatabase db = mountainReaderDBHelper.getWritableDatabase();
+
+        String[] projection = {
+                MountainReaderContract.MountainEntry.COLUMN_NAME_NAME,
+                MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
+                MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH
+        };
 
 
+        sortOrder =  null;
+
+        if (vilken == true) {
+            sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " DESC";
+        }else{
+            sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH+ " DESC";
+        }
+
+
+        final Cursor cursor = db.query(
+                MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
+                projection,             // The array of columns to return (pass null to get all)
+                null,              // The columns for the WHERE clause
+                null,          // The values for the WHERE clause
+                null,                   // don't group the rows
+                null,                   // don't filter by row groups
+                sortOrder               // The sort order
+        );
+
+        final List itemIds = new ArrayList<>();
+        while(cursor.moveToNext()) {
+            String itemId = cursor.getString(
+                    cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_NAME));
+            itemIds.add(itemId);
+        }
+
+
+
+
+
+        adapter = new ArrayAdapter(getApplicationContext(),R.layout.list_item_textview,R.id.list_item_textview,itemIds);
+
+
+        ListView myListView = (ListView)findViewById(R.id.my_listview);
+
+
+        myListView.setAdapter(adapter);
+
+        myListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                cursor.moveToPosition(position);
+                String tmp = "Location: ";
+                tmp += cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
+                tmp +="\nHeight: ";
+                tmp += cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH));
+                tmp +=" meters";
+                Toast.makeText(getApplicationContext(), tmp, Toast.LENGTH_SHORT).show();
+
+            }
+        });
     }
 
     @Override
@@ -55,50 +120,24 @@ public class MainActivity extends AppCompatActivity {
 
         if(id == R.id.action_a){
             vilken = true;
-            new FetchData().execute();
+            visa();
 
             return true;
         }
 
         if(id == R.id.action_h){
             vilken = false;
+            visa();
+        }
+
+        if(id == R.id.action_refresh){
             new FetchData().execute();
+            visa();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-
-    /*
-        TODO: Create an App that stores Mountain data in SQLite database
-
-        TODO: Schema for the database must include columns for all member variables in Mountain class
-              See: https://developer.android.com/training/data-storage/sqlite.html
-
-        TODO: The Main Activity must have a ListView that displays the names of all the Mountains
-              currently in the local SQLite database.
-
-        TODO: In the details activity an ImageView should display the img_url
-              See: https://developer.android.com/reference/android/widget/ImageView.html
-
-        TODO: The main activity must have an Options Menu with the following options:
-              * "Fetch mountains" - Which fetches mountains from the same Internet service as in
-                "Use JSON data over Internet" assignment. Re-use code.
-              * "Drop database" - Which drops the local SQLite database
-
-        TODO: All fields in the details activity should be EditText elements
-
-        TODO: The details activity must have a button "Update" that updates the current mountain
-              in the local SQLite database with the values from the EditText boxes.
-              See: https://developer.android.com/training/data-storage/sqlite.html
-
-        TODO: The details activity must have a button "Delete" that removes the
-              current mountain from the local SQLite database
-              See: https://developer.android.com/training/data-storage/sqlite.html
-
-        TODO: The SQLite database must not contain any duplicate mountain names
-
-     */
     private class FetchData extends AsyncTask<Void,Void,String> {
         @Override
         protected String doInBackground(Void... params) {
@@ -193,106 +232,7 @@ public class MainActivity extends AppCompatActivity {
 
 // Insert the new row, returning the primary key value of the new row
                     long newRowId = db.insert(MountainReaderContract.MountainEntry.TABLE_NAME, null, values);
-
-
-
-
                 }
-
-
-                String[] projection = {
-                        //BaseColumns._ID,
-                        MountainReaderContract.MountainEntry.COLUMN_NAME_NAME
-                        /*MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
-                        MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH,
-                        MountainReaderContract.MountainEntry.COLUMN_NAME_BILD,
-                        MountainReaderContract.MountainEntry.COLUMN_NAME_URL*/
-
-                };
-
-                String sortOrder;
-
-                if (vilken == true) {
-                    sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " DESC";
-                }else{
-                    sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH+ " DESC";
-                }
-
-                final Cursor cursor = db.query(
-                        MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
-                        projection,             // The array of columns to return (pass null to get all)
-                        null,              // The columns for the WHERE clause
-                        null,          // The values for the WHERE clause
-                        null,                   // don't group the rows
-                        null,                   // don't filter by row groups
-                        sortOrder               // The sort order
-                );
-
-                final List itemIds = new ArrayList<>();
-                while(cursor.moveToNext()) {
-                    String itemId = cursor.getString(
-                            cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_NAME));
-                    itemIds.add(itemId);
-                }
-                cursor.close();
-
-
-
-
-
-                adapter = new ArrayAdapter(getApplicationContext(),R.layout.list_item_textview,R.id.list_item_textview,itemIds);
-
-
-                ListView myListView = (ListView)findViewById(R.id.my_listview);
-
-
-                myListView.setAdapter(adapter);
-
-                myListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                        String[] projection = {
-                                //BaseColumns._ID,
-                                //MountainReaderContract.MountainEntry.COLUMN_NAME_NAME
-                                MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION,
-                                MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH,
-                                /*MountainReaderContract.MountainEntry.COLUMN_NAME_BILD,
-                                MountainReaderContract.MountainEntry.COLUMN_NAME_URL*/
-
-                        };
-
-                        String sortOrder;
-
-                        if (vilken == true) {
-                            sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_NAME + " DESC";
-                        }else{
-                            sortOrder = MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH+ " DESC";
-                        }
-
-
-
-                        final Cursor cursor = db.query(
-                                MountainReaderContract.MountainEntry.TABLE_NAME,   // The table to query
-                                projection,             // The array of columns to return (pass null to get all)
-                                null,              // The columns for the WHERE clause
-                                null,          // The values for the WHERE clause
-                                null,                   // don't group the rows
-                                null,                   // don't filter by row groups
-                                sortOrder               // The sort order
-                        );
-
-                        cursor.moveToPosition(position);
-                        String tmp = "Location: ";
-                        tmp += cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_LOCATION));
-                        tmp +="\nHeight: ";
-                        tmp += cursor.getString(cursor.getColumnIndexOrThrow(MountainReaderContract.MountainEntry.COLUMN_NAME_HEIGTH));
-                        tmp +=" meters";
-                        Toast.makeText(getApplicationContext(), tmp, Toast.LENGTH_SHORT).show();
-                        cursor.close();
-                    }
-                });
-
 
 
             }catch (JSONException e) {
